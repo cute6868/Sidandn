@@ -1,0 +1,27 @@
+{
+    "manifest_version": 3,
+    "name": "Sidandn",
+    "version": "1.0.0",
+    "description": "An extension that can execute tasks periodically.",
+    "icons": {
+        "16": "images/icons/sidandn-16.png",
+        "32": "images/icons/sidandn-32.png",
+        "48": "images/icons/sidandn-48.png",
+        "128": "images/icons/sidandn-128.png"
+    },
+    "action": {
+        "default_popup": "popup/popup.html"
+    },
+    "content_scripts": [
+        {
+            "js": ["content-js/listener.js"],
+            "matches": ["<all_urls>"]
+        }
+    ],
+    "web_accessible_resources": [
+        {
+            "resources": ["images/*.png"],
+            "matches": ["<all_urls>"]
+        }
+    ]
+}

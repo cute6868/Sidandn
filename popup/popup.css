@@ -1,0 +1,143 @@
+/* 页面大小 */
+body {
+    width: 309px;
+    height: 500px;
+}
+
+/* 背景图片 */
+body {
+    background-image: url('/images/background/bg.jpg');
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center center;
+}
+
+/* logo-图标 */
+.icon {
+    width: 26px;
+    height: 26px;
+    background-image: url('/images/icons/sidandn-32.png');
+    background-size: cover;
+    margin: 16px 8px 8px 4px;
+}
+
+/* logo-标题 */
+.title {
+    font-size: 17px;
+    font-weight: bold;
+    margin-top: 18px;
+    margin-left: 10px;
+    user-select: none;
+}
+
+/* 顶部按钮 */
+#topBtns>button {
+    font-size: 9px;
+    padding: 2px 6px;
+}
+
+#topBtns {
+    margin-top: 20px;
+    margin-left: 56px;
+}
+
+/* 任务框 */
+.tasks {
+    margin: 32px auto 6px;
+    width: 260px;
+    height: 386px;
+}
+
+/* 搜索框 */
+.search {
+    padding: 0;
+}
+
+.search>form {
+    width: 260px;
+    height: 36px;
+}
+
+/* 添加任务的按钮 */
+.addBtn {
+    padding: 0;
+}
+
+/* 任务列表 */
+.taskList {
+    width: 100%;
+    height: 300px;
+    padding: 10px 6px 16px 0;
+    overflow: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #3a7865 #f1f1f1;
+    overflow: visible;
+}
+
+/* 任务列表-li */
+.taskList li {
+    background-color: transparent;
+    border: 1px solid rgba(0, 0, 0, .325);
+
+}
+
+
+/* 任务列表-图标 */
+.icon-run {
+    width: 26px;
+    height: 26px;
+    background-image: url('/images/others/run.png');
+    background-size: cover;
+}
+
+.icon-more {
+    width: 26px;
+    height: 26px;
+    background-image: url('/images/others/more.png');
+    background-size: cover;
+    margin-left: 6px;
+}
+
+.icon-container:hover {
+    transform: scale(1.2);
+}
+
+.list-group-item {
+    display: flex;
+    justify-content: space-between;
+}
+
+/* 点击more...显示 */
+.icon-more.icon-container {
+    position: relative;
+}
+
+.float-box {
+    position: absolute;
+    top: 66%;
+    left: 84%;
+    background-color: rgba(255, 255, 255, 0.8);
+    /* border: 1px solid rgba(0, 0, 0, .325); */
+    border-radius: 4px;
+    z-index: 999;
+    display: none;
+}
+
+.float-box button {
+    width: 66px;
+    height: 26px;
+    font-size: 12px;
+    display: block;
+    margin: 0 0 1px 0;
+    border: 1px solid rgba(0, 0, 0, .325);
+    background-color: transparent;
+}
+
+.float-box button:last-child {
+    margin-bottom: 0;
+}
+
+.float-box button:hover {
+    background-color: #3f7689;
+    color: #fff;
+}
