@@ -1,13 +1,45 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
-    <title>Here write your content</title>
+    <title id="title"></title>
     <link rel="stylesheet" href="./edit.css">
 </head>
+
 <body>
-    <h1>123</h1>
+    <div class="container">
+        <div class="top">
+            <!-- 显示时间 -->
+            <input id="time" type="text" placeholder="2024-09-30 17:15:39">
+
+            <!-- 颜色渐变分界条 -->
+            <div class="boundary"></div>
+        </div>
+        <div class="bottom">
+            <div>
+                <!-- 操作列表 -->
+                <ul id="operations">
+                    <li>
+                        <!-- 图标 -->
+                        <div class="down-icon"></div>
+                        <!-- 输入框 -->
+                        <input class="content" type="text">
+                        <!-- 删除按钮 -->
+                        <button class="delete">删除</button>
+                    </li>
+                </ul>
+
+                <!-- 功能按钮 -->
+                <div>
+                    <button id="save">保存</button>
+                    <button id="add">添加</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="./edit.js"></script>
 </body>
+
 </html>
