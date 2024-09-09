@@ -1,19 +1,90 @@
-# 项目描述
-
-应用名称：时点点（sidandn）
-
-应用类型：Edge浏览器插件
-
-功能：
-
-- 定时点击
-- 定时输入内容
-
-工作原理：需要提前录入动作（定位元素）
+# 第三期：思路草稿（待整理）
 
 
 
-# 思路草稿
+# 第二期：思路草稿（正在使用）
+
+## 业务思路
+
+## 1. popup弹窗端
+
+权限：小
+
+操作业务：尽可能小，只发送命令即可
+
+popup.html：
+
+- 插件主页，各种功能的入口
+- 点击各种按钮，执行按钮对应的 JS 函数
+- 如需收集数据的，将打开新页面，请用户输入数据
+- 如不需要搜集数据的，或者已经收集数据完毕，将发送请求数据到content_script端
+
+## 2. content_script端
+
+权限：大
+
+操作业务：包含"其他页面的显示"、"数据库操作"、"操作目标dom元素"
+
+1. 监听并获取请求
+2. 分析对应的请求，执行对应功能
+3. 其中，包括：数据库操作、显示页面、操作dom元素
+4. 数据库里面的数据一旦被修改后，需要立即向popup页面发起刷新
+
+
+
+## 3. data.json 端
+
+数据库的设计：ExtensionData.json
+
+```json
+{
+    "id": 1,
+    name: "测试任务",
+    time: "2024-9-17 23:28:16"
+    operation: [
+        {
+            element: obj,
+            input: "xxx"
+        },
+        {yyy},
+        {yyy}
+    ]
+}
+```
+
+发送与返回的数据格式设计
+
+从 popup 发送到 content_script 再发送到 background
+
+发送到数据库
+
+```json
+{
+	request: 'rename',
+	status: 0
+	payload: {
+		id: 5,
+		data: 'jack'
+	}
+}
+```
+
+响应回
+
+```json
+{
+	request: 'rename',
+	status: 1
+	payload: {
+		id: 5,
+		data: null
+	}
+}
+```
+
+
+
+# 第一期：思路草稿（已抛弃）
 
 ## Sidandn 界面与功能实现流程
 
@@ -121,7 +192,6 @@ Json 文件
 ```
 box.task[0] === {
 	"name": "登录京东",
-	"description": "主要用来执行登录京东的操作"
 	"operation": [
 		{},
 		{},
@@ -129,7 +199,6 @@ box.task[0] === {
 	]
 }
 任务的名字：box.task[0].name
-任务的详情：box.task[0].description
 任务的第一个操作：box.task[0].operation[0]
 ```
 
