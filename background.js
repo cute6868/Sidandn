@@ -371,6 +371,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         case 'edit':
             edit(message, sender, sendResponse)
             return true
+        case 'address':
+            address(message, sender, sendResponse)
+            return true
         case 'rename':
             rename(message, sender, sendResponse)
             return true
@@ -430,6 +433,38 @@ async function edit(message, sender, sendResponse) {
         sendResponse(message)
     }
 }
+async function address(message, sender, sendResponse) {
+    console.log(message);
+
+    // 补丁，因为 edit页面 -> popup页面 -> content_scripts页面 这条链路中，popup页面可能随时会被关闭，即传输会失败
+    // 这里我利用了上一个补丁解决的bug，就是 edit页面向popup发送的内容也会同时发送一份到background
+    // 所以，对于 address 请求，我们的通信路劲是这样的： edit页面 -> background -> content_scripts页面
+
+    // 综上所述
+    // 普通请求的通信路径是： edit页面 -> popup页面 -> content_scripts页面 -> background -> 数据库
+    // 而 address 请求的通信路径是： edit页面 -> background -> content_scripts页面
+
+    // 当 address 请求的 message.status === 0 时，意味着需要"转发"到content_scripts页面
+    // 当 address 请求的 message.status === 1 时，意味着直接"发送"到background，让其进行数据库操作
+    if (message.status === 0) {
+        chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+            if (tabs.length > 0) {
+                let currentTab = tabs[0];
+                // 转发信息到当前的content_scripts页面
+                chrome.tabs.sendMessage(currentTab.id, message,
+                    (response) => {
+                        // 响应转发给edit页面
+                        // ？？？
+
+                    });
+            }
+        });
+    } else {
+
+    }
+
+}
+
 async function rename(message, sender, sendResponse) {
     let task = await getTask(message.payload.id)
     task.name = message.payload.data
