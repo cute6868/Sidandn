@@ -24,7 +24,7 @@ function sendMessageToCurrentTab(message, callback) {
 
 
 // 封装函数：打开一个新窗口
-function openWindow(url, callback, width = 500, height = 309) {
+function openWindow(url, callback, width = 560, height = 390) {
 
     // 创建一个新的浏览器窗口，使其在浏览器中居中显示
     const left = Math.round((screen.availWidth - width) / 2);
