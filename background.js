@@ -457,7 +457,7 @@ async function create(message, sender, sendResponse) {
         id: id,
         name: message.payload.data,
         time: '',
-        operation: []
+        operations: []
     }
 
     // 将其添加到数据库中
