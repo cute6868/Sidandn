@@ -456,7 +456,7 @@ async function create(message, sender, sendResponse) {
     task = {
         id: id,
         name: message.payload.data,
-        time: '',
+        time: '2048-10-24 23:59:59',
         operations: []
     }
 
