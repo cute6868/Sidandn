@@ -1,0 +1,203 @@
+/* 清除默认样式 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+li {
+    list-style: none;
+}
+
+/* 设置 1rem = 10px */
+html {
+    font-size: 10px;
+}
+
+/* 设置内容显示大小，且body在屏幕居中 */
+body {
+    width: 54.5rem;
+    height: 35.3rem;
+    background-color: white;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* 
+    当用户想要放大或缩小屏幕的时候，隐藏元素内容 
+    注意！由于rem是相对于html的，而screen中的min-width是基于视口的
+    因此不能使用rem作为单位
+*/
+
+/* 当放大时 */
+@media screen and (min-width: 547px),
+screen and (min-height: 355px) {
+    html {
+        display: none;
+    }
+}
+
+/* 当缩小时 */
+@media screen and (max-width: 545px),
+screen and (max-height: 353px) {
+    html {
+        display: none;
+    }
+}
+
+/* 盒子大小 */
+.container {
+    /* border: 3px solid blue; */
+    width: 100%;
+    height: 100%;
+}
+
+/* 顶部布局 */
+.top {
+    /* border: 3px solid red; */
+    width: 100%;
+    height: 15%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+
+    /* 时间输入框 */
+    #time {
+        border: none;
+        outline: none;
+        text-align: center;
+        font-size: 1.86rem;
+        font-weight: 700;
+        text-shadow: 0 -1px 3px rgba(21, 118, 110, 0.7);
+        color: rgb(21, 118, 110);
+        caret-color: rgb(232, 21, 21);
+    }
+
+    /*透明渐变水平分界线*/
+    #boundary {
+        margin-top: 0.5rem;
+        width: 90%;
+        border: none;
+        height: 4px;
+        background-image: linear-gradient(to right, rgba(0, 0, 0, 0), rgba(221, 180, 66, 0.892), rgba(0, 0, 0, 0));
+        box-shadow: 0px 1px 1px rgba(214, 185, 122, 0.75);
+    }
+}
+
+/* 底部布局 */
+.bottom {
+    /* border: 3px solid green; */
+    width: 100%;
+    height: 85%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    .page {
+        border: 0.3rem solid rgba(30, 30, 29, 0.8);
+        border-radius: 0.3rem;
+        box-shadow: 0px 1px 3px rgba(36, 23, 23, 0.7);
+        width: 70%;
+        height: 86%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: center;
+        background-color: #f9f9f9;
+
+
+        /* 操作框 */
+        #operations {
+            /* border: 3px solid red; */
+            border-bottom: 0.1rem solid rgba(30, 30, 29, 0.8);
+            width: 100%;
+            height: 83%;
+            overflow: auto;
+            scrollbar-width: none;
+
+
+            /* 每一个操作项 */
+            .operation {
+                border: 1px solid rgb(4, 39, 3);
+                margin-top: 0.9rem;
+                border-left: none;
+                border-right: none;
+                background-color: rgba(218, 180, 143, 0.3);
+                width: 100%;
+                height: 4rem;
+                display: flex;
+                justify-content: space-around;
+                align-items: center;
+
+                /* 操作执行方向图标 */
+                .down-icon {
+                    width: 2rem;
+                    height: 2rem;
+                    background-image: url(../images/others/down.png);
+                    background-repeat: no-repeat;
+                    background-position: center center;
+                    background-size: contain;
+                }
+
+                /* 内容输入框 */
+                .content {
+                    border: 0.1rem solid rgba(0, 0, 0, 0.1);
+                    border-radius: 0.6rem;
+                    outline: none;
+                    width: 60%;
+                    height: 66%;
+                    padding: 0.1rem 1rem;
+                    font-size: 1.5rem;
+                }
+
+                /* 删除操作按钮 */
+                .delete {
+                    width: 16%;
+                    height: 56%;
+                    font-size: 1.2rem;
+                    color: rgb(103, 19, 19);
+                }
+            }
+        }
+
+        /* 功能按钮 */
+        .btns {
+            /* border: 3px solid black; */
+            width: 70%;
+            height: 12%;
+            display: flex;
+            justify-content: space-evenly;
+
+            button {
+                border: 1px solid black;
+                width: 48%;
+                height: 86%;
+                font-size: 1.2rem;
+                font-weight: 700;
+                background-color: white;
+            }
+
+            button:hover {
+                background-color: rgba(239, 211, 163, 0.7);
+            }
+
+            button:active {
+                width: 49%;
+                height: 87%;
+                background-color: rgba(234, 115, 85, 0.7);
+            }
+
+            button:nth-child(1) {
+                color: rgb(192, 33, 33);
+            }
+
+            button:nth-child(2) {
+                color: rgb(198, 108, 67);
+            }
+        }
+    }
+}
