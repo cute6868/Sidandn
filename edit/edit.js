@@ -1,6 +1,8 @@
-// 封装函数：将消息发送到 popup
-// 注意！sendMessageToPopup将message发送给popup时，也会被同时发送到background，我们需要在background中，打上补丁
-function sendMessageToPopup(message, callback) {
+// ========================== 封装函数 ========================
+
+
+// 封装函数：将消息发送到background.js
+function sendMessageToBackground(message, callback) {
     chrome.runtime.sendMessage(message, callback)
 }
 
@@ -38,10 +40,44 @@ function updatePage(task) {
 }
 
 
-// 封装函数：添加一条操作
-function add() {
-    // 向content_script发送一条鼠标监控消息，请求获取鼠标点击的元素（本质上获取的是元素的路径，而非元素对象本身）
-    sendMessageToPopup({
+// ========================= edit.js操作 ===================================
+
+
+// 1.定义任务对象
+let task = {}
+
+
+// 2.监听来自popup.js的消息
+// 注意！这里的监听功能会收到来自background.js中sendMessageToContent函数发送的消息，我们并不需要这些数据，因此下面进行了数据过滤，以防被影响
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    // 判断消息来自哪里，如果是来自popup.js，则更新任务对象的id，并向background请求该任务的数据进行页面渲染
+    if (message.from !== 'popup') return
+    task.id = message.taskId
+    sendMessageToBackground({
+        request: 'edit',
+        status: 0,
+        payload: {
+            id: task.id,
+            data: null
+        }
+    }, (response) => {
+        if (!response.status) return
+
+        // 更新任务对象
+        task = response.payload.data
+
+        // 更新页面
+        updatePage(task)
+    })
+
+    sendResponse('ok')
+});
+
+
+// 点击添加按钮
+document.querySelector('#add').addEventListener('click', () => {
+    // 向background.js发送请求，再让background.js转发给content.js，获取鼠标点击元素的路径
+    sendMessageToBackground({
         request: "address",
         status: 0,
         payload: {
@@ -49,61 +85,37 @@ function add() {
             data: null
         }
     }, (response) => {
-        console.log(response.payload.data, 666);
+        console.log(response);
 
-        if (response.status === 1) {
-            // 获取到元素之后，更新当前窗口内存中所维护的task对象
-            task.operations.push({
-                element: response.payload.data,
-                content: ''
-            })
+        if (!response.status) return
 
-            // 同时，向页面中添加一条li元素
-            let ul = document.querySelector("#operations")
-            let li = document.createElement("li")
-            li.className = "operation"
-            li.innerHTML = `
+        // 获取到元素之后，更新当前全局变量中所维护的task对象
+        task.operations.push({
+            element: response.payload.data,
+            content: ''
+        })
+
+        // 同时，向页面中添加一条li元素
+        let ul = document.querySelector("#operations")
+        let li = document.createElement("li")
+        li.className = "operation"
+        li.innerHTML = `
             <div class="down-icon"></div>
             <input class="content" type="text">
             <button class="delete">删除</button>
         `
-            ul.appendChild(li)
-        }
-    })
-}
-
-
-// 定义任务对象
-let task = {}
-
-
-// 定义"基本请求消息"
-let message = {
-    request: 'edit',
-    status: 0,
-    payload: {
-        id: null,
-        data: null
-    }
-}
-
-
-// 发送"基本请求消息"，获取当前edit任务的id信息
-sendMessageToPopup(message, (response1) => {
-
-    // 发送"其他内容请求消息"，获取当前任务的所有edit内容，做好渲染数据的准备
-    sendMessageToPopup(response1, (response2) => {
-
-        // 获取到了任务
-        task = response2.payload.data
-
-        // 重新渲染页面
-        updatePage(task)
+        ul.appendChild(li)
     })
 })
 
 
-// 监听添加按钮的点击事件
-document.querySelector('#add').addEventListener('click', () => {
-    add()
-})
+// 点击保存按钮
+// document.querySelector('#save').addEventListener('click', () => {
+
+// })
+
+
+// 点击删除按钮
+// document.querySelector().addEventListener('click', () => {
+
+// })

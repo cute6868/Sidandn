@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "Sidandn",
-    "version": "2.0.0",
+    "version": "3.0.0",
     "description": "An extension that can execute tasks periodically.",
     "icons": {
         "16": "images/icons/sidandn-16.png",
@@ -22,7 +22,9 @@
         "service_worker": "background.js"
     },
     "permissions": [
-        "activeTab",
-        "storage"
+        "runtime",
+        "tabs",
+        "storage",
+        "activeTab"
     ]
 }

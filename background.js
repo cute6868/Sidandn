@@ -1,4 +1,7 @@
-// // 定义一个 Database 类来封装 IndexedDB 操作
+// =================================== 数据库接口 ==================================
+
+
+// 定义一个 Database 类来封装 IndexedDB 操作
 class Database {
     constructor(dbName, dbVersion) {
         this.dbName = dbName
@@ -246,6 +249,9 @@ class Database {
 const db = new Database('ExtensionDatabase', 1)
 
 
+// =================================== 封装函数 ==================================
+
+
 // 封装函数：添加新任务
 async function addTask(task) {
     try {
@@ -356,7 +362,22 @@ async function getAllTaskIds() {
 }
 
 
-// 监听来自 content_scripts 的消息，执行对应的数据库操作
+// 封装函数：将消息发送到content.js
+// 注意！此方法发送的消息会同时发送到edit.js中的监听函数，因为edit页面也符合条件，请在edit页面完成数据过滤，以防被影响
+function sendMessageToContent(message, callback) {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs.length > 0) {
+            // 发送消息到当前活动标签页的内容脚本
+            chrome.tabs.sendMessage(tabs[0].id, message, callback);
+        }
+    });
+}
+
+
+// ======================================= background.js操作 ========================================
+
+
+// 监听来自popup.js和edit.js的消息
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     switch (message.request) {
         case 'search':
@@ -393,9 +414,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 })
 
 
-// 具体的数据库操作
-async function search(message, sender, sendResponse) {
 
+
+// 与数据库进行操作
+async function search(message, sender, sendResponse) {
+    // 解析当前的搜索条件
+    // 从数据库中获取所有的任务的 id 和 name
+    // 查询匹配项
+    // 返回查询结果
 }
 async function load(message, sender, sendResponse) {
     // 获取所有任务的 id 和 name
@@ -407,28 +433,23 @@ async function load(message, sender, sendResponse) {
     }
 }
 async function run(message, sender, sendResponse) {
-
+    // 从数据库中获取任务
+    // 发送任务到content.js
+    // 将content.jsd的响应转达给popup.js
 }
 async function edit(message, sender, sendResponse) {
-
-    // 补丁：由于多端请求问题，edit页面和popup页面都会发送edit请求，所以这里需要判断一下
-    // 我们只处理由popup页面发送的edit请求，忽略edit页面发送的请求
-    if (message.payload.id === null || message.status === 0) {
-        // console.log('这条来自edit页面的edit请求,已经被逮捕了哦!');
-        return
-    }
 
     // 如果edit请求里面没有数据，说明是请求获取数据库的数据用来渲染edit页面
     if (message.payload.data === null) {
         let task = await getTask(message.payload.id)
-        message.status = 0;  // 注意补丁！响应要重置为0
+        message.status = 1;
         message.payload.data = task
         sendResponse(message)
     }
     // 否则，说明有新的edit数据来了，要更新数据库里面的数据
     else {
         let taskId = await updateTask(message.payload.data)
-        message.status = 0;  // 注意补丁！响应要重置为0
+        message.status = 1;
         message.payload.id = taskId
         sendResponse(message)
     }
@@ -436,35 +457,11 @@ async function edit(message, sender, sendResponse) {
 async function address(message, sender, sendResponse) {
     console.log(message);
 
-    // 补丁，因为 edit页面 -> popup页面 -> content_scripts页面 这条链路中，popup页面可能随时会被关闭，即传输会失败
-    // 这里我利用了上一个补丁解决的bug，就是 edit页面向popup发送的内容也会同时发送一份到background
-    // 所以，对于 address 请求，我们的通信路劲是这样的： edit页面 -> background -> content_scripts页面
-
-    // 综上所述
-    // 普通请求的通信路径是： edit页面 -> popup页面 -> content_scripts页面 -> background -> 数据库
-    // 而 address 请求的通信路径是： edit页面 -> background -> content_scripts页面
-
-    // 当 address 请求的 message.status === 0 时，意味着需要"转发"到content_scripts页面
-    // 当 address 请求的 message.status === 1 时，意味着直接"发送"到background，让其进行数据库操作
-    if (message.status === 0) {
-        chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-            if (tabs.length > 0) {
-                let currentTab = tabs[0];
-                // 转发信息到当前的content_scripts页面
-                chrome.tabs.sendMessage(currentTab.id, message,
-                    (response) => {
-                        // 响应转发给edit页面
-                        // ？？？
-
-                    });
-            }
-        });
-    } else {
-
-    }
-
+    // 转发消息到content.js
+    sendMessageToContent(message, (response) => {
+        console.log('bg:', response);
+    })
 }
-
 async function rename(message, sender, sendResponse) {
     let task = await getTask(message.payload.id)
     task.name = message.payload.data
@@ -504,7 +501,8 @@ async function create(message, sender, sendResponse) {
     }
 }
 async function stop(message, sender, sendResponse) {
-
+    // 向content.js发送停止请求
+    // 将content.js的响应转发给popup.js
 }
 async function clear(message, sender, sendResponse) {
     await clearAllTask()
