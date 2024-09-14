@@ -109,12 +109,61 @@ document.querySelector('#add').addEventListener('click', () => {
 
 
 // 点击保存按钮
-// document.querySelector('#save').addEventListener('click', () => {
+document.querySelector('#save').addEventListener('click', () => {
+    // 获取所有li元素的input元素里面的文本内容
+    let contents = Array.from(document.querySelectorAll('.content')).map((input) => input.value);
 
-// })
+    // 更新任务对象里每一个操作的文本内容
+    for (let i = 0; i < task.operations.length; i++) {
+        task.operations[i].content = contents[i]
+    }
+
+    // 更新任务对象里面的time
+    task.time = document.querySelector("#time").value
+
+    // 将任务对象发送给background.js
+    sendMessageToBackground({
+        from: 'edit',
+        request: "edit",
+        status: 0,
+        payload: {
+            id: task.id,
+            data: task
+        }
+    }, (response) => { })
+})
 
 
 // 点击删除按钮
-// document.querySelector().addEventListener('click', () => {
+document.querySelector('#operations').addEventListener('click', (event) => {
+    // 判断点击的元素是不是删除按钮
+    if (event.target.className !== 'delete') return
 
-// })
+    // 获取当前按钮所在的li元素
+    let li = event.target.parentElement
+
+    // 获取li元素在其父元素的所有子元素中的索引位置
+    let index = Array.from(li.parentElement.children).indexOf(li)
+
+    // 根据索引值删除数组中对应的操作对象
+    task.operations.splice(index, 1)
+
+    // 同时，将页面中对应的li元素也删除
+    li.remove()
+})
+
+
+// 检查输入时间合法性
+document.querySelector("#time").addEventListener('blur', () => {
+    let time = document.querySelector('#time').value
+    if (isNaN(Number(time))) {
+        alert("请输入数字")
+        return
+    }
+})
+
+function checkTime() {
+    let time = document.querySelector('#time').value
+    if (isNaN(Number(time))) return false
+    return true
+}
