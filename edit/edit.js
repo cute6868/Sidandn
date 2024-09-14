@@ -130,7 +130,10 @@ document.querySelector('#save').addEventListener('click', () => {
             id: task.id,
             data: task
         }
-    }, (response) => { })
+    }, (response) => {
+        if (!response.status) return
+        window.close()
+    })
 })
 
 
@@ -153,17 +156,68 @@ document.querySelector('#operations').addEventListener('click', (event) => {
 })
 
 
+// ========================== 检查输入时间的合法性 ============================
+
+// 获取当前时间的函数，格式为 "YYYY-MM-DD HH:MM:SS"
+function getCurrentTime() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1; // 月份是从0开始的
+    const day = now.getDate();
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+    const seconds = now.getSeconds();
+
+    // 补零函数
+    const zeroPad = (num) => num.toString().padStart(2, '0');
+
+    return `${year}-${zeroPad(month)}-${zeroPad(day)} ${zeroPad(hours)}:${zeroPad(minutes)}:${zeroPad(seconds)}`;
+}
+
+// 检查输入时间的合法性
+function checkTime(time) {
+    // 正则表达式匹配格式为 "YYYY-MM-DD HH:MM:SS" 的时间字符串
+    const regex = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/;
+
+    // 检查格式是否正确
+    if (!regex.test(time)) {
+        return getCurrentTime()
+    }
+
+    // 解析输入的时间字符串
+    const [datePart, timePart] = time.split(' ');
+    const [year, month, day] = datePart.split('-').map(Number);
+    const [hour, minute, second] = timePart.split(':').map(Number);
+
+    // 利用日期对象会自动合理化时间的特性，判断合理化前后的时间是否一致，如果一致则时间合理
+    const date = new Date(year, month - 1, day, hour, minute, second);
+
+    // 检查时间的合理性
+    if (
+        date.getFullYear() !== year ||
+        date.getMonth() + 1 !== month ||
+        date.getDate() !== day ||
+        date.getHours() !== hour ||
+        date.getMinutes() !== minute ||
+        date.getSeconds() !== second
+    ) {
+        return getCurrentTime();
+    }
+
+    // 检查时间的先后顺序，如果输入的时间在当前时间之前则返回当前时间
+    if (date < new Date()) {
+        return getCurrentTime();
+    }
+
+    // 如果时间格式正确、合理且时间先后顺序正确，则返回输入的时间
+    return time;
+}
+
 // 检查输入时间合法性
 document.querySelector("#time").addEventListener('blur', () => {
-    let time = document.querySelector('#time').value
-    if (isNaN(Number(time))) {
-        alert("请输入数字")
-        return
-    }
-})
+    // 获取元素对象
+    let element = document.querySelector('#time')
 
-function checkTime() {
-    let time = document.querySelector('#time').value
-    if (isNaN(Number(time))) return false
-    return true
-}
+    // 检查时间的合法性，并渲染到页面中
+    element.value = checkTime(element.value)
+})
