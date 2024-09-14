@@ -362,61 +362,68 @@ async function getAllTaskIds() {
 }
 
 
-// 封装函数：将消息发送到content.js
-// 注意！此方法发送的消息会同时发送到edit.js中的监听函数，因为edit页面也符合条件，请在edit页面完成数据过滤，以防被影响
+// 全局变量：保存当前content_script所在标签页的id
+let contentId = null;
+
+
+// 封装函数：将消息以专用通道的方式发送到content.js
 function sendMessageToContent(message, callback) {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        if (tabs.length > 0) {
-            // 发送消息到当前活动标签页的内容脚本
-            chrome.tabs.sendMessage(tabs[0].id, message, callback);
-        }
-    });
+    chrome.tabs.sendMessage(contentId, message, callback);
 }
 
 
 // ======================================= background.js操作 ========================================
 
 
-// 监听来自popup.js和edit.js的消息
+// ============= 监听所有发送过来的消息 ==============
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    switch (message.request) {
-        case 'search':
-            search(message, sender, sendResponse)
-            return true     // true 代表异步等待结果
-        case 'load':
-            load(message, sender, sendResponse)
-            return true
-        case 'run':
-            run(message, sender, sendResponse)
-            return true
-        case 'edit':
-            edit(message, sender, sendResponse)
-            return true
-        case 'address':
-            address(message, sender, sendResponse)
-            return true
-        case 'rename':
-            rename(message, sender, sendResponse)
-            return true
-        case 'remove':
-            remove(message, sender, sendResponse)
-            return true
-        case 'create':
-            create(message, sender, sendResponse)
-            return true
-        case 'stop':
-            stop(message, sender, sendResponse)
-            return true
-        case 'clear':
-            clear(message, sender, sendResponse)
-            return true
+    // 处理来自popup.js的消息
+    if (message.from == "popup") {
+        switch (message.request) {
+            case 'search':
+                search(message, sender, sendResponse)
+                return true     // true 代表异步等待结果
+            case 'load':
+                load(message, sender, sendResponse)
+                return true
+            case 'run':
+                run(message, sender, sendResponse)
+                return true
+            case 'rename':
+                rename(message, sender, sendResponse)
+                return true
+            case 'remove':
+                remove(message, sender, sendResponse)
+                return true
+            case 'create':
+                create(message, sender, sendResponse)
+                return true
+            case 'stop':
+                stop(message, sender, sendResponse)
+                return true
+            case 'clear':
+                clear(message, sender, sendResponse)
+                return true
+        }
+    }
+    // 处理来自popup.js的消息
+    else if (message.from == 'edit') {
+        switch (message.request) {
+            case 'edit':
+                edit(message, sender, sendResponse)
+                return true
+            case 'address':
+                address(message, sender, sendResponse)
+                return true
+        }
     }
 })
 
 
+// ================= 具体的处理操作 ===================
 
 
-// 与数据库进行操作
+// 1.处理popup.js的消息
 async function search(message, sender, sendResponse) {
     // 解析当前的搜索条件
     // 从数据库中获取所有的任务的 id 和 name
@@ -424,10 +431,14 @@ async function search(message, sender, sendResponse) {
     // 返回查询结果
 }
 async function load(message, sender, sendResponse) {
+    // 更新content_script所在标签页的id  
+    contentId = message.payload.data
+
     // 获取所有任务的 id 和 name
     let array = await getAllTaskIdsAndNames()
     if (array.length >= 0) {
         message.status = 1
+        message.from = 'background'
         message.payload.data = array
         sendResponse(message)
     }
@@ -437,42 +448,19 @@ async function run(message, sender, sendResponse) {
     // 发送任务到content.js
     // 将content.jsd的响应转达给popup.js
 }
-async function edit(message, sender, sendResponse) {
-
-    // 如果edit请求里面没有数据，说明是请求获取数据库的数据用来渲染edit页面
-    if (message.payload.data === null) {
-        let task = await getTask(message.payload.id)
-        message.status = 1;
-        message.payload.data = task
-        sendResponse(message)
-    }
-    // 否则，说明有新的edit数据来了，要更新数据库里面的数据
-    else {
-        let taskId = await updateTask(message.payload.data)
-        message.status = 1;
-        message.payload.id = taskId
-        sendResponse(message)
-    }
-}
-async function address(message, sender, sendResponse) {
-    console.log(message);
-
-    // 转发消息到content.js
-    sendMessageToContent(message, (response) => {
-        console.log('bg:', response);
-    })
-}
 async function rename(message, sender, sendResponse) {
     let task = await getTask(message.payload.id)
     task.name = message.payload.data
     let taskId = await updateTask(task)
     message.status = 1
+    message.from = 'background'
     message.payload.id = taskId
     sendResponse(message)
 }
 async function remove(message, sender, sendResponse) {
     await removeTask(message.payload.id)
     message.status = 1
+    message.from = 'background'
     sendResponse(message)
 }
 async function create(message, sender, sendResponse) {
@@ -496,6 +484,7 @@ async function create(message, sender, sendResponse) {
     let taskId = await addTask(task)
     if (taskId >= 0) {
         message.status = 1
+        message.from = 'background'
         message.payload.id = taskId
         sendResponse(message)
     }
@@ -507,5 +496,35 @@ async function stop(message, sender, sendResponse) {
 async function clear(message, sender, sendResponse) {
     await clearAllTask()
     message.status = 1
+    message.from = 'background'
     sendResponse(message)
+}
+
+
+// 2.处理edit.js的消息
+async function edit(message, sender, sendResponse) {
+
+    // 如果edit请求里面没有数据，说明是请求获取数据库的数据用来渲染edit页面
+    if (message.payload.data === null) {
+        let task = await getTask(message.payload.id)
+        message.status = 1;
+        message.from = 'background'
+        message.payload.data = task
+        sendResponse(message)
+    }
+    // 否则，说明有新的edit数据来了，要更新数据库里面的数据
+    else {
+        let taskId = await updateTask(message.payload.data)
+        message.status = 1;
+        message.from = 'background'
+        message.payload.id = taskId
+        sendResponse(message)
+    }
+}
+async function address(message, sender, sendResponse) {
+    // 将消息转发消息到content.js
+    message.from = 'background'
+    sendMessageToContent(message, (response) => {
+        sendResponse(response)
+    })
 }

@@ -1,7 +1,7 @@
 // ======================== 封装函数 ==========================
 
 
-// 封装函数：将消息发送到background.js
+// 封装函数：将消息以广播的形式发送到background.js
 function sendMessageToBackground(message, callback) {
     chrome.runtime.sendMessage(message, callback)
 }
@@ -28,7 +28,7 @@ function openWindow(url, message, callback, width = 560, height = 390) {
             // 确保是我们所创建窗口的标签页，并且页面已经加载完成
             if (tabId !== createdWindow.tabs[0].id || changeInfo.status !== 'complete') return
 
-            // 发送信息到新窗口页面
+            // 发送信息到新窗口页面（专用通信通道，不会影响其他组件的通信）
             chrome.tabs.sendMessage(tabId, message, callback)
 
             // 移除事件监听
@@ -43,24 +43,31 @@ function openWindow(url, message, callback, width = 560, height = 390) {
 // ========================= popup.js操作 ===================================
 
 
-// 加载数据库中的任务（需要 id 和 name 渲染为<li>标签）
+// 加载必要内容
+// 1.加载当前content_script所在标签页的id
+// 2.加载数据库中的任务（需要 id 和 name 渲染为<li>标签）
 document.addEventListener('DOMContentLoaded', (event) => {
-    // 发送请求消息
-    sendMessageToBackground({
-        request: 'load',
-        status: 0,
-        payload: {
-            id: null,
-            data: null
-        }
-    }, (response) => {
-        if (!response.status) return
-        let arr = response.payload.data
-        let ul = document.querySelector('.bottom .tasks')
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        // 获取当前content_script所在标签页的 id
+        contentId = Number(tabs[0].id)
 
-        // 渲染页面（加载数据库中的任务，并渲染为<li>标签）
-        arr.forEach(item => {
-            let li = `
+        // 发送请求消息
+        sendMessageToBackground({
+            from: 'popup',
+            request: 'load',
+            status: 0,
+            payload: {
+                id: null,
+                data: contentId
+            }
+        }, (response) => {
+            if (!response.status) return
+            let arr = response.payload.data
+            let ul = document.querySelector('.bottom .tasks')
+
+            // 渲染页面（加载数据库中的任务，并渲染为<li>标签）
+            arr.forEach(item => {
+                let li = `
                 <li id="task-${item.id}">
                     <div class="name">${item.name}</div>
                     <div class="run"></div>
@@ -73,12 +80,13 @@ document.addEventListener('DOMContentLoaded', (event) => {
                     </div>
                 </li>
                 `
-            // 通过DOMParser解析字符串，并获取<li>元素，安全地创建<li>元素
-            let doc = new DOMParser().parseFromString(li, 'text/html')
-            li = doc.body.firstChild
-            ul.insertBefore(li, ul.firstChild)
-        });
-    })
+                // 通过DOMParser解析字符串，并获取<li>元素，安全地创建<li>元素
+                let doc = new DOMParser().parseFromString(li, 'text/html')
+                li = doc.body.firstChild
+                ul.insertBefore(li, ul.firstChild)
+            });
+        })
+    });
 })
 
 
@@ -88,6 +96,7 @@ document.querySelector('.top .btns:nth-child(2)').addEventListener('click', (eve
     if (confirm('警告，此操作不可逆！您确定要删除所有的任务吗？')) {
         // 发送请求消息
         sendMessageToBackground({
+            from: 'popup',
             request: 'clear',
             status: 0,
             payload: {
@@ -107,6 +116,7 @@ document.querySelector('.top .btns:nth-child(2)').addEventListener('click', (eve
 document.querySelector('.top .btns:nth-child(1)').addEventListener('click', (event) => {
     // 发送请求消息
     sendMessageToBackground({
+        from: 'popup',
         request: 'stop',
         status: 0,
         payload: {
@@ -125,6 +135,7 @@ document.querySelector('.top .btns:nth-child(1)').addEventListener('click', (eve
 document.querySelector('.bottom .search input').addEventListener('input', (event) => {
     // 发送请求消息
     sendMessageToBackground({
+        from: 'popup',
         request: 'search',
         status: 0,
         payload: {
@@ -147,6 +158,7 @@ document.querySelector('.bottom .search button').addEventListener('click', (even
     // 发送请求
     if (name) {
         sendMessageToBackground({
+            from: 'popup',
             request: 'create',
             status: 0,
             payload: {
@@ -233,6 +245,7 @@ document.querySelector('.bottom .tasks').addEventListener('click', (event) => {
 
                 // 发送请求
                 sendMessageToBackground({
+                    from: 'popup',
                     request: taskType,
                     status: 0,
                     payload: {
@@ -252,6 +265,7 @@ document.querySelector('.bottom .tasks').addEventListener('click', (event) => {
 
                 // 发送请求
                 sendMessageToBackground({
+                    from: 'popup',
                     request: taskType,
                     status: 0,
                     payload: {
@@ -267,7 +281,7 @@ document.querySelector('.bottom .tasks').addEventListener('click', (event) => {
                 break;
             // =============================
             case 'edit':
-                // 打开新窗口，并发送信息
+                // 打开新窗口，并发送信息（专用通信通道，不会影响其他组件通信）
                 openWindow('edit/edit.html', { from: 'popup', taskId: Number(num) }, (response) => { })
         }
     }

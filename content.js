@@ -1,3 +1,6 @@
+// =============================== 封装函数 ===============================
+
+
 // 封装函数：传入DOM元素对象，将构建出该元素的CSS选择器路径
 function buildPath(element) {
     // 如果当前元素是文档的body元素，则直接返回它的标签名（小写形式）
@@ -40,12 +43,24 @@ function buildPath(element) {
 }
 
 
-// ？？？
-function address(message, sender, sendResponse) {
 
-    console.log(message);
+// =============================== content.js操作 ===============================
 
-    // 事件
+
+// 监听所有发送过来的消息（已设置为background->content通信专用）
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.from !== 'background') return false
+    switch (message.request) {
+        case 'address':
+            address(message, sendResponse)
+            return true
+    }
+});
+
+
+// 具体操作
+function address(message, sendResponse) {
+    // 点击事件
     let CtrlAndClick = (event) => {
 
         // 检查是否同时按下了Ctrl键和鼠标左键
@@ -57,6 +72,7 @@ function address(message, sender, sendResponse) {
             // 获取鼠标所在位置的节点
             let path = buildPath(event.target);
             message.status = 1
+            message.from = 'content'
             message.payload.data = path
             sendResponse(message);
 
@@ -68,14 +84,3 @@ function address(message, sender, sendResponse) {
     // 开启事件监听
     document.addEventListener('mousedown', CtrlAndClick);
 }
-
-
-// =============================== content.js操作 ===============================
-
-
-// 监听来自background.js的消息
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log(message);
-    sendResponse('how are you');
-    return true;
-});

@@ -1,7 +1,7 @@
 // ========================== 封装函数 ========================
 
 
-// 封装函数：将消息发送到background.js
+// 封装函数：将消息以广播的形式发送到background.js
 function sendMessageToBackground(message, callback) {
     chrome.runtime.sendMessage(message, callback)
 }
@@ -47,13 +47,13 @@ function updatePage(task) {
 let task = {}
 
 
-// 2.监听来自popup.js的消息
-// 注意！这里的监听功能会收到来自background.js中sendMessageToContent函数发送的消息，我们并不需要这些数据，因此下面进行了数据过滤，以防被影响
+// 2.监听所有发送过来的消息（已设置为popup->edit通信专用）
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // 判断消息来自哪里，如果是来自popup.js，则更新任务对象的id，并向background请求该任务的数据进行页面渲染
     if (message.from !== 'popup') return
     task.id = message.taskId
     sendMessageToBackground({
+        from: 'edit',
         request: 'edit',
         status: 0,
         payload: {
@@ -78,6 +78,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 document.querySelector('#add').addEventListener('click', () => {
     // 向background.js发送请求，再让background.js转发给content.js，获取鼠标点击元素的路径
     sendMessageToBackground({
+        from: 'edit',
         request: "address",
         status: 0,
         payload: {
@@ -85,8 +86,6 @@ document.querySelector('#add').addEventListener('click', () => {
             data: null
         }
     }, (response) => {
-        console.log(response);
-
         if (!response.status) return
 
         // 获取到元素之后，更新当前全局变量中所维护的task对象
