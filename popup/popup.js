@@ -206,6 +206,7 @@ document.querySelector('.bottom .tasks').addEventListener('click', (event) => {
 
         // 发送请求
         sendMessageToBackground({
+            from: 'popup',
             request: 'run',
             status: 0,
             payload: {
@@ -213,9 +214,9 @@ document.querySelector('.bottom .tasks').addEventListener('click', (event) => {
                 data: null
             }
         }, (response) => {
-            if (!response.status) return
-            // 后端运行即可，前端无需渲染页面
-            console.log(response)
+            if (!response.status) {
+                confirm(response.payload.data)
+            }
         })
     }
 

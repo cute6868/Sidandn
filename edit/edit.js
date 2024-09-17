@@ -159,10 +159,16 @@ document.querySelector('#operations').addEventListener('click', (event) => {
 // ========================== 检查输入时间的合法性 ============================
 
 // 获取当前时间的函数，格式为 "YYYY-MM-DD HH:MM:SS"
-function getCurrentTime() {
+function getCurrentTime(delay = 0) {
     const now = new Date();
+
+    // 延时delay毫秒
+    now.setTime(now.getTime() + delay);
+
     const year = now.getFullYear();
-    const month = now.getMonth() + 1; // 月份是从0开始的
+
+    // 月份是从0开始的
+    const month = now.getMonth() + 1;
     const day = now.getDate();
     const hours = now.getHours();
     const minutes = now.getMinutes();
@@ -176,12 +182,15 @@ function getCurrentTime() {
 
 // 检查输入时间的合法性
 function checkTime(time) {
+    // 如果时间字符串为0000-00-00 00:00:00，则表示"不限时间"
+    if (time === '0000-00-00 00:00:00') return time
+
     // 正则表达式匹配格式为 "YYYY-MM-DD HH:MM:SS" 的时间字符串
     const regex = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/;
 
     // 检查格式是否正确
     if (!regex.test(time)) {
-        return getCurrentTime()
+        return getCurrentTime(10000)
     }
 
     // 解析输入的时间字符串
@@ -201,12 +210,12 @@ function checkTime(time) {
         date.getMinutes() !== minute ||
         date.getSeconds() !== second
     ) {
-        return getCurrentTime();
+        return getCurrentTime(10000);
     }
 
     // 检查时间的先后顺序，如果输入的时间在当前时间之前则返回当前时间
     if (date < new Date()) {
-        return getCurrentTime();
+        return getCurrentTime(10000);
     }
 
     // 如果时间格式正确、合理且时间先后顺序正确，则返回输入的时间

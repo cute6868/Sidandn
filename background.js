@@ -444,9 +444,15 @@ async function load(message, sender, sendResponse) {
     }
 }
 async function run(message, sender, sendResponse) {
-    // 从数据库中获取任务
-    // 发送任务到content.js
-    // 将content.jsd的响应转达给popup.js
+    // 从数据库中获取任务对象
+    message.payload.data = await getTask(message.payload.id)
+    message.from = 'background'
+
+    // 将任务对象交给content.js
+    sendMessageToContent(message, (response) => {
+        response.from = 'background'
+        sendResponse(response)
+    })
 }
 async function rename(message, sender, sendResponse) {
     let task = await getTask(message.payload.id)
@@ -476,7 +482,7 @@ async function create(message, sender, sendResponse) {
     task = {
         id: id,
         name: message.payload.data,
-        time: '2048-10-24 23:59:59',
+        time: '0000-00-00 00:00:00',
         operations: []
     }
 
@@ -525,6 +531,7 @@ async function address(message, sender, sendResponse) {
     // 将消息转发消息到content.js
     message.from = 'background'
     sendMessageToContent(message, (response) => {
+        response.from = 'background'
         sendResponse(response)
     })
 }
