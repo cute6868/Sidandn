@@ -40,6 +40,89 @@ function updatePage(task) {
 }
 
 
+// 封装函数：获取当前时间的函数，格式为 "YYYY-MM-DD HH:MM:SS"
+function getCurrentTime(delay = 0) {
+    const now = new Date();
+
+    // 延时delay毫秒
+    now.setTime(now.getTime() + delay);
+
+    const year = now.getFullYear();
+
+    // 月份是从0开始的
+    const month = now.getMonth() + 1;
+    const day = now.getDate();
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+    const seconds = now.getSeconds();
+
+    // 补零函数
+    const zeroPad = (num) => num.toString().padStart(2, '0');
+
+    return `${year}-${zeroPad(month)}-${zeroPad(day)} ${zeroPad(hours)}:${zeroPad(minutes)}:${zeroPad(seconds)}`;
+}
+
+
+// 封装函数：判断字符串是否为正整数
+function isPositiveInteger(str) {
+    return /^[1-9]\d*$/.test(str)
+}
+
+
+// 封装函数：字符分解
+function splitString(str) {
+    // 分割字符串，获取最后一个字符，和最后一个字符前面的字符
+    if (str.length === 0) return ['', '']
+    const lastChar = str[str.length - 1];
+    const remainingChars = str.slice(0, -1);
+    return [remainingChars, lastChar];
+}
+
+
+// 封装函数：检查输入时间的合法性
+function checkTime(time) {
+    // ====================== 快捷输入 ========================
+    if (time === '0') return '0000-00-00 00:00:00'
+    if (time === 'now') return getCurrentTime()
+    if (isPositiveInteger(time)) return getCurrentTime(Number(time) * 1000)
+    const [num, unit] = splitString(time)
+    switch (unit) {
+        case 's':
+            return getCurrentTime(Number(num) * 1000)
+        case 'm':
+            return getCurrentTime(Number(num) * 60 * 1000)
+        case 'h':
+            return getCurrentTime(Number(num) * 60 * 60 * 1000)
+    }
+
+    // ====================== 完整输入 =========================
+    if (time === '0000-00-00 00:00:00') return time
+
+    // -- 延后1分钟
+    const delay = 60 * 1000  // 单位毫秒
+
+    // -- 正则表达式匹配格式为 "YYYY-MM-DD HH:MM:SS" 的时间字符串
+    const regex = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/;
+    if (!regex.test(time)) return getCurrentTime(delay)
+
+    // -- 检查时间的先后顺序，如果输入的时间在当前时间之前则返回当前时间
+    if (date < new Date()) return getCurrentTime(delay);
+
+    // -- 利用日期对象会自动合理化时间的特性，判断合理化前后的时间是否一样，如果一样，则说明时间合理
+    const [datePart, timePart] = time.split(' ');
+    const [year, month, day] = datePart.split('-').map(Number);
+    const [hour, minute, second] = timePart.split(':').map(Number);
+    const date = new Date(year, month - 1, day, hour, minute, second);
+    if (
+        date.getFullYear() !== year || date.getMonth() + 1 !== month || date.getDate() !== day ||
+        date.getHours() !== hour || date.getMinutes() !== minute || date.getSeconds() !== second
+    ) return getCurrentTime(delay);
+
+    // -- 如果都符合以上条件，则返回用户自己输入的时间
+    return time;
+}
+
+
 // ========================= edit.js操作 ===================================
 
 
@@ -155,72 +238,6 @@ document.querySelector('#operations').addEventListener('click', (event) => {
     li.remove()
 })
 
-
-// ========================== 检查输入时间的合法性 ============================
-
-// 获取当前时间的函数，格式为 "YYYY-MM-DD HH:MM:SS"
-function getCurrentTime(delay = 0) {
-    const now = new Date();
-
-    // 延时delay毫秒
-    now.setTime(now.getTime() + delay);
-
-    const year = now.getFullYear();
-
-    // 月份是从0开始的
-    const month = now.getMonth() + 1;
-    const day = now.getDate();
-    const hours = now.getHours();
-    const minutes = now.getMinutes();
-    const seconds = now.getSeconds();
-
-    // 补零函数
-    const zeroPad = (num) => num.toString().padStart(2, '0');
-
-    return `${year}-${zeroPad(month)}-${zeroPad(day)} ${zeroPad(hours)}:${zeroPad(minutes)}:${zeroPad(seconds)}`;
-}
-
-// 检查输入时间的合法性
-function checkTime(time) {
-    // 如果时间字符串为0000-00-00 00:00:00，则表示"不限时间"
-    if (time === '0000-00-00 00:00:00') return time
-
-    // 正则表达式匹配格式为 "YYYY-MM-DD HH:MM:SS" 的时间字符串
-    const regex = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/;
-
-    // 检查格式是否正确
-    if (!regex.test(time)) {
-        return getCurrentTime(10000)
-    }
-
-    // 解析输入的时间字符串
-    const [datePart, timePart] = time.split(' ');
-    const [year, month, day] = datePart.split('-').map(Number);
-    const [hour, minute, second] = timePart.split(':').map(Number);
-
-    // 利用日期对象会自动合理化时间的特性，判断合理化前后的时间是否一致，如果一致则时间合理
-    const date = new Date(year, month - 1, day, hour, minute, second);
-
-    // 检查时间的合理性
-    if (
-        date.getFullYear() !== year ||
-        date.getMonth() + 1 !== month ||
-        date.getDate() !== day ||
-        date.getHours() !== hour ||
-        date.getMinutes() !== minute ||
-        date.getSeconds() !== second
-    ) {
-        return getCurrentTime(10000);
-    }
-
-    // 检查时间的先后顺序，如果输入的时间在当前时间之前则返回当前时间
-    if (date < new Date()) {
-        return getCurrentTime(10000);
-    }
-
-    // 如果时间格式正确、合理且时间先后顺序正确，则返回输入的时间
-    return time;
-}
 
 // 检查输入时间合法性
 document.querySelector("#time").addEventListener('blur', () => {

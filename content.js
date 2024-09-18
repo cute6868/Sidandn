@@ -85,18 +85,40 @@ function simulateMouseClick(element) {
 }
 
 
+// 封装函数：阻塞函数
+function sleep(delay) {
+    return new Promise((resolve) => setTimeout(resolve, delay))
+}
+
+
 // 封装函数：执行任务
 function execute(task) {
-    if (task.operations.length === 0) return
-    task.operations.forEach(operation => {
-        // 点击一下元素
-        simulateMouseClick(document.querySelector(operation.element))
+    if (task.operations.length === 0) return false
+    task.operations.forEach(async (operation) => {
+        let retryNum = 0
+        let retryTime = 100
+        let element = document.querySelector(operation.element)
 
-        // 如果content属性中有内容，则输入内容
-        if (task.content !== '') {
-            simulateTextInput(operation.content, document.querySelector(operation.element))
+        // 寻找元素，如果没有找到，等待100毫秒后重试；如果还没找到，等待上一次时间的两倍后继续重试，直到找到或者重试次数超过8次为止！
+        while (!element) {
+            if (retryNum > 8) break
+            await sleep(retryTime)
+            element = document.querySelector(operation.element)
+            retryTime *= 2
+            retryNum++
+        }
+
+        if (element) {
+            // 点击一下元素
+            simulateMouseClick(element)
+
+            // 如果content属性中有内容，则输入内容
+            if (task.content !== '') {
+                simulateTextInput(operation.content, element)
+            }
         }
     });
+    return true
 }
 
 
