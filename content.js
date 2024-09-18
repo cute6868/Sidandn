@@ -124,6 +124,9 @@ function execute(task) {
 
 // =============================== content.js操作 ===============================
 
+// 当前正在执行的任务
+let currentTasks = []
+
 
 // 监听所有发送过来的消息（已设置为background->content通信专用）
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -134,6 +137,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             return true
         case 'run':
             run(message, sendResponse)
+            return true
+        case 'stop':
+            stop(message, sendResponse)
             return true
     }
 });
@@ -200,10 +206,22 @@ function run(message, sendResponse) {
         // 时间没有过期
         else {
             let timer = setTimeout(() => { execute(task) }, delta)
+            currentTasks.push(timer)
+
             message.status = 1
-            message.payload.data = timer
+            message.payload.data = null
             message.from = 'content'
             sendResponse(message)
         }
     }
+}
+
+function stop(message, sendResponse) {
+    // 停止所有任务
+    currentTasks.forEach(taskTimer => {
+        clearTimeout(taskTimer)
+    });
+    message.status = 1
+    message.from = 'content'
+    sendResponse(message)
 }

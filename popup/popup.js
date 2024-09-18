@@ -40,6 +40,38 @@ function openWindow(url, message, callback, width = 560, height = 390) {
 }
 
 
+// 封装函数：更新任务列表
+function updateTasks(arr) {
+    // 定位任务列表
+    let ul = document.querySelector('.bottom .tasks')
+
+    // 删除所有任务
+    ul.innerHTML = ''
+
+    // 创建并插入任务
+    if (arr.length === 0) return
+    arr.forEach(item => {
+        let li = `
+                <li id="task-${item.id}">
+                    <div class="name">${item.name}</div>
+                    <div class="run"></div>
+                    <div class="more">
+                        <div class="content">
+                            <button id="rename">重命名</button>
+                            <button id="edit">编辑操作</button>
+                            <button id="remove">删除</button>
+                        </div>
+                    </div>
+                </li>
+                `
+        // 通过DOMParser解析字符串，并获取<li>元素，安全地创建<li>元素
+        let doc = new DOMParser().parseFromString(li, 'text/html')
+        li = doc.body.firstChild
+        ul.insertBefore(li, ul.firstChild)
+    });
+}
+
+
 // ========================= popup.js操作 ===================================
 
 
@@ -62,29 +94,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
             }
         }, (response) => {
             if (!response.status) return
-            let arr = response.payload.data
-            let ul = document.querySelector('.bottom .tasks')
-
-            // 渲染页面（加载数据库中的任务，并渲染为<li>标签）
-            arr.forEach(item => {
-                let li = `
-                <li id="task-${item.id}">
-                    <div class="name">${item.name}</div>
-                    <div class="run"></div>
-                    <div class="more">
-                        <div class="content">
-                            <button id="rename">重命名</button>
-                            <button id="edit">编辑操作</button>
-                            <button id="remove">删除</button>
-                        </div>
-                    </div>
-                </li>
-                `
-                // 通过DOMParser解析字符串，并获取<li>元素，安全地创建<li>元素
-                let doc = new DOMParser().parseFromString(li, 'text/html')
-                li = doc.body.firstChild
-                ul.insertBefore(li, ul.firstChild)
-            });
+            updateTasks(response.payload.data)  // 重新渲染页面
         })
     });
 })
@@ -105,8 +115,7 @@ document.querySelector('.top .btns:nth-child(2)').addEventListener('click', (eve
             }
         }, (response) => {
             if (!response.status) return
-            // 重新渲染页面（即：删除所有<li>标签）
-            document.querySelector('.bottom .tasks').innerHTML = ''
+            updateTasks(response.payload.data)  // 重新渲染页面
         })
     }
 })
@@ -125,8 +134,7 @@ document.querySelector('.top .btns:nth-child(1)').addEventListener('click', (eve
         }
     }, (response) => {
         if (!response.status) return
-        // 无需渲染页面，后端终止运行即可，前端什么都不用做
-        console.log(response)
+        confirm('所有的任务已被终止运行')
     })
 })
 
@@ -144,8 +152,7 @@ document.querySelector('.bottom .search input').addEventListener('input', (event
         }
     }, (response) => {
         if (!response.status) return
-        // 重新渲染页面???
-        console.log(response)
+        updateTasks(response.payload.data)  // 重新渲染页面
     })
 })
 

@@ -425,10 +425,35 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 // 1.处理popup.js的消息
 async function search(message, sender, sendResponse) {
-    // 解析当前的搜索条件
-    // 从数据库中获取所有的任务的 id 和 name
-    // 查询匹配项
-    // 返回查询结果
+    // 搜索目标
+    searchWord = message.payload.data
+
+    // 搜索范围
+    let arr = await getAllTaskIdsAndNames()
+
+    // 排序
+    function sortByNameMatch(arr, searchWord) {
+        return arr.sort((a, b) => {
+            // 完全匹配的排在数组的最后面（也就是渲染时的最上面）
+            if (a.name === searchWord && b.name !== searchWord) return 1;
+            if (a.name !== searchWord && b.name === searchWord) return -1;
+
+            // 包含搜索词但不是完全匹配的排在中间
+            const aIncludes = a.name.includes(searchWord);
+            const bIncludes = b.name.includes(searchWord);
+            if (aIncludes && !bIncludes) return 1;
+            if (!aIncludes && bIncludes) return -1;
+
+            // 完全不匹配的排在数组的最前面（也就是渲染时的最下面）
+            // 如果两者都不包含搜索词，保持原有顺序
+            return 0;
+        });
+    }
+    arr = sortByNameMatch(arr, searchWord)
+    message.payload.data = arr
+    message.status = 1
+    message.from = 'background'
+    sendResponse(message)
 }
 async function load(message, sender, sendResponse) {
     // 更新content_script所在标签页的id  
@@ -496,8 +521,11 @@ async function create(message, sender, sendResponse) {
     }
 }
 async function stop(message, sender, sendResponse) {
-    // 向content.js发送停止请求
-    // 将content.js的响应转发给popup.js
+    message.from = 'background'
+    sendMessageToContent(message, (response) => {
+        response.from = 'background'
+        sendResponse(response)
+    })
 }
 async function clear(message, sender, sendResponse) {
     await clearAllTask()
