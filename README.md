@@ -17,4 +17,4 @@
 
 
 # Project Structure
-![alt text](image.png)
+![structure](/images/others/structure.png)
