@@ -49,7 +49,7 @@ function updateTasks(arr) {
     ul.innerHTML = ''
 
     // 创建并插入任务
-    if (arr.length === 0) return
+    if (arr === null || arr.length === 0) return
     arr.forEach(item => {
         let li = `
                 <li id="task-${item.id}">

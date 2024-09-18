@@ -13,3 +13,8 @@
 - Application Name: `Sidandn`
 - Application Type: `Edge Browser Extension`
 - Application Purpose: `It is a tool that can complete the operation task on time, quantity and automatic.`
+
+
+
+# Project Structure
+![alt text](image.png)
