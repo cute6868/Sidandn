@@ -3,7 +3,7 @@
 
 // 封装函数：将消息以广播的形式发送到background.js
 function sendMessageToBackground(message, callback) {
-    chrome.runtime.sendMessage(message, callback)
+    chrome.runtime.sendMessage(message, callback);
 }
 
 
@@ -26,30 +26,30 @@ function openWindow(url, message, callback, width = 560, height = 390) {
         // 页面加载
         function pageLoad(tabId, changeInfo, tab) {
             // 确保是我们所创建窗口的标签页，并且页面已经加载完成
-            if (tabId !== createdWindow.tabs[0].id || changeInfo.status !== 'complete') return
+            if (tabId !== createdWindow.tabs[0].id || changeInfo.status !== 'complete') return;
 
             // 发送信息到新窗口页面（专用通信通道，不会影响其他组件的通信）
-            chrome.tabs.sendMessage(tabId, message, callback)
+            chrome.tabs.sendMessage(tabId, message, callback);
 
             // 移除事件监听
-            chrome.tabs.onUpdated.removeListener(pageLoad)
+            chrome.tabs.onUpdated.removeListener(pageLoad);
         }
         // 监听页面加载
-        chrome.tabs.onUpdated.addListener(pageLoad)
-    })
+        chrome.tabs.onUpdated.addListener(pageLoad);
+    });
 }
 
 
 // 封装函数：更新任务列表
 function updateTasks(arr) {
     // 定位任务列表
-    let ul = document.querySelector('.bottom .tasks')
+    let ul = document.querySelector('.bottom .tasks');
 
     // 删除所有任务
-    ul.innerHTML = ''
+    ul.innerHTML = '';
 
     // 创建并插入任务
-    if (arr === null || arr.length === 0) return
+    if (arr === null || arr.length === 0) return;
     arr.forEach(item => {
         let li = `
                 <li id="task-${item.id}">
@@ -63,11 +63,11 @@ function updateTasks(arr) {
                         </div>
                     </div>
                 </li>
-                `
+                `;
         // 通过DOMParser解析字符串，并获取<li>元素，安全地创建<li>元素
-        let doc = new DOMParser().parseFromString(li, 'text/html')
-        li = doc.body.firstChild
-        ul.insertBefore(li, ul.firstChild)
+        let doc = new DOMParser().parseFromString(li, 'text/html');
+        li = doc.body.firstChild;
+        ul.insertBefore(li, ul.firstChild);
     });
 }
 
@@ -81,7 +81,7 @@ function updateTasks(arr) {
 document.addEventListener('DOMContentLoaded', (event) => {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         // 获取当前content_script所在标签页的 id
-        contentId = Number(tabs[0].id)
+        contentId = Number(tabs[0].id);
 
         // 发送请求消息
         sendMessageToBackground({
@@ -93,11 +93,11 @@ document.addEventListener('DOMContentLoaded', (event) => {
                 data: contentId
             }
         }, (response) => {
-            if (!response.status) return
-            updateTasks(response.payload.data)  // 重新渲染页面
-        })
+            if (!response.status) return;
+            updateTasks(response.payload.data);  // 重新渲染页面
+        });
     });
-})
+});
 
 
 // "清空任务"按钮
@@ -114,11 +114,11 @@ document.querySelector('.top .btns:nth-child(2)').addEventListener('click', (eve
                 data: null
             }
         }, (response) => {
-            if (!response.status) return
-            updateTasks(response.payload.data)  // 重新渲染页面
-        })
+            if (!response.status) return;
+            updateTasks(response.payload.data);  // 重新渲染页面
+        });
     }
-})
+});
 
 
 // "终止运行"按钮
@@ -133,10 +133,10 @@ document.querySelector('.top .btns:nth-child(1)').addEventListener('click', (eve
             data: null
         }
     }, (response) => {
-        if (!response.status) return
-        confirm('所有的任务已被终止运行')
-    })
-})
+        if (!response.status) return;
+        confirm('所有的任务已被终止运行');
+    });
+});
 
 
 // "搜索任务"框
@@ -151,16 +151,16 @@ document.querySelector('.bottom .search input').addEventListener('input', (event
             data: event.target.value
         }
     }, (response) => {
-        if (!response.status) return
-        updateTasks(response.payload.data)  // 重新渲染页面
-    })
-})
+        if (!response.status) return;
+        updateTasks(response.payload.data);  // 重新渲染页面
+    });
+});
 
 
 // "创建新任务"按钮
 document.querySelector('.bottom .search button').addEventListener('click', (event) => {
     // 获取数据
-    let name = prompt('新任务的名称：')
+    let name = prompt('新任务的名称：');
 
     // 发送请求
     if (name) {
@@ -173,9 +173,9 @@ document.querySelector('.bottom .search button').addEventListener('click', (even
                 data: name
             }
         }, (response) => {
-            if (!response.status) return
+            if (!response.status) return;
             // 重新渲染页面（即：插入一个<li>标签到<ul>的头部，需要用到 id 和 name）
-            let ul = document.querySelector('.bottom .tasks')
+            let ul = document.querySelector('.bottom .tasks');
             let li = `
                 <li id="task-${response.payload.id}">
                     <div class="name">${response.payload.data}</div>
@@ -188,28 +188,28 @@ document.querySelector('.bottom .search button').addEventListener('click', (even
                         </div>
                     </div>
                 </li>
-                `
+                `;
             // 通过DOMParser解析字符串，并获取<li>元素，安全地创建<li>元素
-            let doc = new DOMParser().parseFromString(li, 'text/html')
-            li = doc.body.firstChild
-            ul.insertBefore(li, ul.firstChild)
-        })
+            let doc = new DOMParser().parseFromString(li, 'text/html');
+            li = doc.body.firstChild;
+            ul.insertBefore(li, ul.firstChild);
+        });
     }
-})
+});
 
 
 // 使用事件委托，实现监控用户的操作（当点击<ul class="tasks">里面的某个元素时，将执行对应元素的功能）
 document.querySelector('.bottom .tasks').addEventListener('click', (event) => {
     // 不管点击了什么，都先隐藏"按钮组"
     document.querySelectorAll('.tasks .more .content').forEach(item => {
-        item.style.display = 'none'
-    })
+        item.style.display = 'none';
+    });
 
     // 判断所点击的元素是否为"run按钮"
     if (event.target && event.target.matches('.run')) {
 
         // 获取对应<li>元素的id属性，并解析为"任务序列号"
-        let num = event.target.closest('li').getAttribute('id').split('-')[1]
+        let num = event.target.closest('li').getAttribute('id').split('-')[1];
 
         // 发送请求
         sendMessageToBackground({
@@ -222,34 +222,34 @@ document.querySelector('.bottom .tasks').addEventListener('click', (event) => {
             }
         }, (response) => {
             if (!response.status) {
-                confirm(response.payload.data)
+                confirm(response.payload.data);
             }
-        })
+        });
     }
 
     // 判断所点击的元素是否为"more按钮"
     else if (event.target && event.target.matches('.more')) {
 
         // 显示"按钮组"
-        event.target.querySelector('.content').style.display = 'block'
+        event.target.querySelector('.content').style.display = 'block';
     }
 
     // 判断所点击的元素是否为more里面的"按钮组"的某一个按钮
     else if (event.target && event.target.matches('.content button')) {
 
         // 获取对应<li>元素的id属性，并解析为"任务序列号"
-        let num = event.target.closest('li').getAttribute('id').split('-')[1]
+        let num = event.target.closest('li').getAttribute('id').split('-')[1];
 
         // 获取按钮的id属性
-        let taskType = event.target.getAttribute('id')
+        let taskType = event.target.getAttribute('id');
 
         // 分析按钮的id属性，收集不同的数据
         switch (taskType) {
             // =============================
             case 'rename':
                 // 获取数据
-                let newName = prompt('新名称：')
-                if (newName === null || newName === '') return
+                let newName = prompt('新名称：');
+                if (newName === null || newName === '') return;
 
                 // 发送请求
                 sendMessageToBackground({
@@ -261,15 +261,15 @@ document.querySelector('.bottom .tasks').addEventListener('click', (event) => {
                         data: newName
                     }
                 }, (response) => {
-                    if (!response.status) return
+                    if (!response.status) return;
                     // 重新渲染页面，通过id定位到对应的<li>元素，并修改其 name
-                    document.querySelector(`#task-${response.payload.id} .name`).innerText = response.payload.data
-                })
+                    document.querySelector(`#task-${response.payload.id} .name`).innerText = response.payload.data;
+                });
                 break;
             // =============================
             case 'remove':
                 // 获取数据
-                if (!confirm('确认删除吗？')) return
+                if (!confirm('确认删除吗？')) return;
 
                 // 发送请求
                 sendMessageToBackground({
@@ -281,16 +281,16 @@ document.querySelector('.bottom .tasks').addEventListener('click', (event) => {
                         data: null
                     }
                 }, (response) => {
-                    if (!response.status) return
+                    if (!response.status) return;
                     // 重新渲染页面，通过id定位到对应的<li>元素，将其直接删除！
-                    document.querySelector(`#task-${response.payload.id}`).remove()
+                    document.querySelector(`#task-${response.payload.id}`).remove();
 
-                })
+                });
                 break;
             // =============================
             case 'edit':
                 // 打开新窗口，并发送信息（专用通信通道，不会影响其他组件通信）
-                openWindow('edit/edit.html', { from: 'popup', taskId: Number(num) }, (response) => { })
+                openWindow('edit/edit.html', { from: 'popup', taskId: Number(num) }, (response) => { });
         }
     }
-})
+});

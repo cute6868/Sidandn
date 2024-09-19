@@ -87,60 +87,60 @@ function simulateMouseClick(element) {
 
 // 封装函数：阻塞函数
 function sleep(delay) {
-    return new Promise((resolve) => setTimeout(resolve, delay))
+    return new Promise((resolve) => setTimeout(resolve, delay));
 }
 
 
 // 封装函数：执行任务
 function execute(task) {
-    if (task.operations.length === 0) return false
+    if (task.operations.length === 0) return false;
     task.operations.forEach(async (operation) => {
-        let retryNum = 0
-        let retryTime = 100
-        let element = document.querySelector(operation.element)
+        let retryNum = 0;
+        let retryTime = 100;
+        let element = document.querySelector(operation.element);
 
         // 寻找元素，如果没有找到，等待100毫秒后重试；如果还没找到，等待上一次时间的两倍后继续重试，直到找到或者重试次数超过8次为止！
         while (!element) {
-            if (retryNum > 8) break
-            await sleep(retryTime)
-            element = document.querySelector(operation.element)
-            retryTime *= 2
-            retryNum++
+            if (retryNum > 8) break;
+            await sleep(retryTime);
+            element = document.querySelector(operation.element);
+            retryTime *= 2;
+            retryNum++;
         }
 
         if (element) {
             // 点击一下元素
-            simulateMouseClick(element)
+            simulateMouseClick(element);
 
             // 如果content属性中有内容，则输入内容
             if (task.content !== '') {
-                simulateTextInput(operation.content, element)
+                simulateTextInput(operation.content, element);
             }
         }
     });
-    return true
+    return true;
 }
 
 
 // =============================== content.js操作 ===============================
 
 // 当前正在执行的任务
-let currentTasks = []
+let currentTasks = [];
 
 
 // 监听所有发送过来的消息（已设置为background->content通信专用）
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.from !== 'background') return false
+    if (message.from !== 'background') return false;
     switch (message.request) {
         case 'address':
-            address(message, sendResponse)
-            return true
+            address(message, sendResponse);
+            return true;
         case 'run':
-            run(message, sendResponse)
-            return true
+            run(message, sendResponse);
+            return true;
         case 'stop':
-            stop(message, sendResponse)
-            return true
+            stop(message, sendResponse);
+            return true;
     }
 });
 
@@ -158,15 +158,15 @@ function address(message, sendResponse) {
 
             // 获取鼠标所在位置的节点
             let path = buildPath(event.target);
-            message.status = 1
-            message.from = 'content'
-            message.payload.data = path
+            message.status = 1;
+            message.from = 'content';
+            message.payload.data = path;
             sendResponse(message);
 
             // 关闭事件监听
             document.removeEventListener('mousedown', CtrlAndClick);
         }
-    }
+    };
 
     // 开启事件监听
     document.addEventListener('mousedown', CtrlAndClick);
@@ -174,16 +174,16 @@ function address(message, sendResponse) {
 
 function run(message, sendResponse) {
     // 获取任务对象和时间
-    let task = message.payload.data
+    let task = message.payload.data;
 
     // 时间校验
     // 1.不限时间
     if (task.time === '0000-00-00 00:00:00') {
-        execute(task)
-        message.status = 1
-        message.payload.data = null
-        message.from = 'content'
-        sendResponse(message)
+        execute(task);
+        message.status = 1;
+        message.payload.data = null;
+        message.from = 'content';
+        sendResponse(message);
     }
     // 2.限时间
     else {
@@ -198,20 +198,20 @@ function run(message, sendResponse) {
 
         // 时间过期
         if (delta < 0) {
-            message.status = 0
-            message.payload.data = '任务执行时间已过期'
-            message.from = 'content'
-            sendResponse(message)
+            message.status = 0;
+            message.payload.data = '任务执行时间已过期';
+            message.from = 'content';
+            sendResponse(message);
         }
         // 时间没有过期
         else {
-            let timer = setTimeout(() => { execute(task) }, delta)
-            currentTasks.push(timer)
+            let timer = setTimeout(() => { execute(task); }, delta);
+            currentTasks.push(timer);
 
-            message.status = 1
-            message.payload.data = null
-            message.from = 'content'
-            sendResponse(message)
+            message.status = 1;
+            message.payload.data = null;
+            message.from = 'content';
+            sendResponse(message);
         }
     }
 }
@@ -219,9 +219,9 @@ function run(message, sendResponse) {
 function stop(message, sendResponse) {
     // 停止所有任务
     currentTasks.forEach(taskTimer => {
-        clearTimeout(taskTimer)
+        clearTimeout(taskTimer);
     });
-    message.status = 1
-    message.from = 'content'
-    sendResponse(message)
+    message.status = 1;
+    message.from = 'content';
+    sendResponse(message);
 }
